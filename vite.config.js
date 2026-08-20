@@ -20,7 +20,15 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react()],
     server: {
-      port: 5173,
+      // Render (and any container host) only routes to a process bound on
+      // 0.0.0.0, and it assigns the port via $PORT — Vite defaults to
+      // localhost:5173, which Render's port scan never sees. Bind all
+      // interfaces + honour $PORT (falls back to 5173 for local dev).
+      host: true,
+      port: Number(process.env.PORT) || 5173,
+      // Vite blocks requests whose Host header isn't allow-listed; permit the
+      // Render domain so the deployed dev server doesn't 403 with "Blocked request".
+      allowedHosts: ['.onrender.com'],
       proxy: {
         '/api/core': {
           target: core,
