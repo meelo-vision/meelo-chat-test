@@ -1,0 +1,83 @@
+* { box-sizing: border-box; }
+:root { --bg:#0f1115; --panel:#171a21; --panel2:#1e222b; --line:#2a2f3a; --text:#e6e8ec; --muted:#8b93a1; --accent:#4f8cff; --me:#2b6cff; }
+html, body, #root { height: 100%; margin: 0; }
+body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+code { background: var(--panel2); padding: 1px 5px; border-radius: 4px; }
+.muted { color: var(--muted); }
+.small { font-size: 12px; }
+.pad { padding: 12px; }
+.ellipsis { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.center { height: 100%; display: flex; align-items: center; justify-content: center; text-align: center; }
+.notice { padding: 2rem; font-family: sans-serif; }
+.error { background: #3a1d1d; color: #ff9a9a; border: 1px solid #5a2a2a; padding: 8px 12px; border-radius: 8px; margin: 8px 12px; font-size: 13px; }
+
+.app { display: grid; grid-template-columns: 300px 1fr; height: 100vh; }
+.sidebar { background: var(--panel); border-right: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0; }
+.sidebar-head { display: flex; justify-content: space-between; align-items: center; padding: 14px; border-bottom: 1px solid var(--line); }
+.brand { font-weight: 700; font-size: 18px; }
+.refresh { margin: 12px; padding: 8px; background: var(--panel2); color: var(--text); border: 1px solid var(--line); border-radius: 8px; cursor: pointer; }
+.refresh:disabled { opacity: .6; cursor: default; }
+
+.thread-list { overflow-y: auto; flex: 1; min-height: 0; }
+.thread { display: block; width: 100%; text-align: left; background: transparent; color: var(--text); border: none; border-bottom: 1px solid var(--line); padding: 12px 14px; cursor: pointer; }
+.thread:hover { background: var(--panel2); }
+.thread.sel { background: var(--panel2); box-shadow: inset 3px 0 0 var(--accent); }
+.thread-title { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
+.tag { font-size: 10px; background: var(--accent); color: #fff; padding: 1px 6px; border-radius: 10px; vertical-align: middle; margin-left: 6px; }
+
+.main { min-width: 0; min-height: 0; display: flex; }
+.chat { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.chat-head { padding: 12px 16px; border-bottom: 1px solid var(--line); background: var(--panel); }
+.messages { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+.msg { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; }
+.msg.me { align-items: flex-end; }
+.msg-time { padding: 0 4px; font-size: 11px; }
+.bubble { max-width: 70%; padding: 10px 14px; border-radius: 14px; white-space: pre-wrap; word-wrap: break-word; line-height: 1.4; font-size: 14px; }
+.msg.meelo .bubble { background: var(--panel2); border: 1px solid var(--line); border-bottom-left-radius: 4px; }
+.msg.me .bubble { background: var(--me); color: #fff; border-bottom-right-radius: 4px; }
+.thinking { color: var(--muted); font-style: italic; }
+
+.composer { display: flex; gap: 8px; padding: 12px; border-top: 1px solid var(--line); background: var(--panel); }
+.composer input { flex: 1; background: var(--panel2); color: var(--text); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; font-size: 14px; outline: none; }
+.composer input:focus { border-color: var(--accent); }
+.composer button { background: var(--accent); color: #fff; border: none; border-radius: 10px; padding: 0 18px; font-weight: 600; cursor: pointer; }
+.composer button:disabled { opacity: .5; cursor: default; }
+
+/* Tabs (Chat / Recipes) */
+.main { flex-direction: column; }
+.tabs { display: flex; gap: 4px; padding: 8px 12px 0; border-bottom: 1px solid var(--line); background: var(--panel); }
+.tab { background: transparent; color: var(--muted); border: none; border-bottom: 2px solid transparent; padding: 8px 14px; font-size: 14px; font-weight: 600; cursor: pointer; }
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--text); border-bottom-color: var(--accent); }
+.main > .chat, .main > .recipes, .main > .center { flex: 1 1 auto; min-height: 0; }
+.main > .center { height: auto; }
+
+/* Save-recipe button on a recipe chat bubble */
+.recipe-save { margin-top: 8px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.recipe-save-btn { background: var(--accent); color: #fff; border: none; border-radius: 8px; padding: 5px 10px; font-size: 12px; font-weight: 600; cursor: pointer; }
+.recipe-save-btn:disabled { opacity: .6; cursor: default; }
+.recipe-save-err { color: #ff9a9a; font-size: 12px; }
+
+/* Recipes tab */
+.recipes { overflow-y: auto; padding: 16px; }
+.recipes-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.recipes-head h2 { margin: 0; font-size: 18px; }
+.refresh.small { margin: 0; padding: 6px 10px; font-size: 12px; }
+.section { margin-bottom: 24px; }
+.section-title { font-size: 13px; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); border-bottom: 1px solid var(--line); padding-bottom: 6px; margin: 0 0 12px; }
+.collection { margin-bottom: 16px; }
+.collection-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.collection-name { font-weight: 600; }
+.dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); display: inline-block; flex: 0 0 auto; }
+.recipe-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
+.recipe-card { background: var(--panel2); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.recipe-card.muted { opacity: .7; padding: 12px; }
+.recipe-card-head { width: 100%; text-align: left; background: transparent; color: var(--text); border: none; padding: 12px; cursor: pointer; }
+.recipe-card-head:hover { background: var(--panel); }
+.recipe-title { font-weight: 600; font-size: 14px; margin-bottom: 2px; }
+.recipe-detail { padding: 0 12px 12px; }
+.detail-label { font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); margin: 10px 0 4px; }
+.ingredients, .steps { margin: 0; padding-left: 18px; font-size: 13px; line-height: 1.5; }
+.macros { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.macro { font-size: 11px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 2px 8px; }
