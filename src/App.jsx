@@ -16,6 +16,7 @@ import {
   getCollections,
   pick,
 } from './api.js'
+import Search from './Search.jsx'
 
 // fmtTime renders a message's ISO timestamp as a short local time (e.g. "3:04 PM"),
 // with the date prepended when it's not today. Returns '' for missing/bad input.
@@ -60,7 +61,7 @@ function Workspace() {
   const [active, setActive] = useState(null) // the selected thread object
   const [loadErr, setLoadErr] = useState('')
   const [loading, setLoading] = useState(true)
-  const [tab, setTab] = useState('chat') // 'chat' | 'recipes'
+  const [tab, setTab] = useState('chat') // 'chat' | 'recipes' | 'search'
 
   const loadAll = useCallback(async () => {
     setLoading(true)
@@ -143,6 +144,12 @@ function Workspace() {
           >
             Recipes
           </button>
+          <button
+            className={`tab ${tab === 'search' ? 'active' : ''}`}
+            onClick={() => setTab('search')}
+          >
+            Search
+          </button>
         </div>
 
         {tab === 'chat' ? (
@@ -156,6 +163,8 @@ function Workspace() {
           ) : (
             <div className="center muted">Pick a thread to start chatting.</div>
           )
+        ) : tab === 'search' ? (
+          <Search getToken={getToken} />
         ) : (
           <Recipes getToken={getToken} />
         )}

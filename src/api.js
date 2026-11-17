@@ -73,3 +73,33 @@ export const getRecipes = (getToken, collectionId) =>
 // (recipe_id + cached entity_title) and an item_count.
 export const getCollections = (getToken) =>
   request(getToken, '/api/core', '/collections')
+
+// ── Search (core) ────────────────────────────────────────────────────────────
+
+const qs = (params) =>
+  Object.entries(params)
+    .filter(([, v]) => v !== undefined && v !== null && v !== '')
+    .map(([k, v]) => `${k}=${encodeURIComponent(v)}`)
+    .join('&')
+
+// Autocomplete rows: { text, kind: recent | recipe | web, recipe_id?, relation? }.
+export const getSuggestions = (getToken, q) =>
+  request(getToken, '/api/core', `/search/suggest?${qs({ q })}`)
+
+// Meelo recipes the caller can open (own, saved, public).
+export const searchRecipes = (getToken, q, cursor) =>
+  request(getToken, '/api/core', `/search/recipes?${qs({ q, cursor })}`)
+
+// Recipe pages from the web (Brave), with import_status per result.
+export const searchWeb = (getToken, q, page = 0) =>
+  request(getToken, '/api/core', `/search/web?${qs({ q, page })}`)
+
+export const clearRecentSearches = (getToken) =>
+  request(getToken, '/api/core', '/search/recent', { method: 'DELETE' })
+
+// A URL → a recipe draft (not saved).
+export const importRecipeURL = (getToken, url) =>
+  request(getToken, '/api/core', '/recipes/import', {
+    method: 'POST',
+    body: JSON.stringify({ url }),
+  })
