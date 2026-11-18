@@ -103,3 +103,51 @@ export const importRecipeURL = (getToken, url) =>
     method: 'POST',
     body: JSON.stringify({ url }),
   })
+
+// ── Preferences (core /context) ──────────────────────────────────────────────
+
+// The user's assembled context: dietary, health, nutrition, grocery, … facets.
+export const getContext = (getToken) => request(getToken, '/api/core', '/context')
+
+// Create/update fields. List keys (allergy, dietary_restriction, …) append;
+// scalar keys (daily_protein_goal, …) overwrite. Returns the new context.
+export const patchContextFields = (getToken, fields) =>
+  request(getToken, '/api/core', '/context/fields', {
+    method: 'PATCH',
+    body: JSON.stringify({ fields }),
+  })
+
+// Remove one value from a list key (or a scalar key). Returns the new context.
+export const deleteContextField = (getToken, key, value) =>
+  request(getToken, '/api/core', '/context/fields', {
+    method: 'DELETE',
+    body: JSON.stringify({ key, value }),
+  })
+
+// ── Groceries (core /grocery) ────────────────────────────────────────────────
+
+export const getGroceries = (getToken) => request(getToken, '/api/core', '/grocery/items')
+
+export const addGroceries = (getToken, names) =>
+  request(getToken, '/api/core', '/grocery/items', {
+    method: 'POST',
+    body: JSON.stringify({ items: names.map((name) => ({ name })) }),
+  })
+
+export const removeGrocery = (getToken, id) =>
+  request(getToken, '/api/core', `/grocery/items/${id}`, { method: 'DELETE' })
+
+// Put a catalog product on an item ("in the cart"). 422 allergen_conflict when
+// it conflicts with a household allergy.
+export const pickGroceryProduct = (getToken, id, ref) =>
+  request(getToken, '/api/core', `/grocery/items/${id}/product`, {
+    method: 'PUT',
+    body: JSON.stringify({ ref }),
+  })
+
+export const clearGroceryProduct = (getToken, id) =>
+  request(getToken, '/api/core', `/grocery/items/${id}/product`, { method: 'DELETE' })
+
+// More catalog products for q (US, household allergies, ranked).
+export const searchGroceryProducts = (getToken, q, limit = 10) =>
+  request(getToken, '/api/core', `/grocery/products/search?q=${encodeURIComponent(q)}&limit=${limit}`)

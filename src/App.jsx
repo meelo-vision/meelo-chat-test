@@ -17,6 +17,8 @@ import {
   pick,
 } from './api.js'
 import Search from './Search.jsx'
+import Preferences from './Preferences.jsx'
+import Groceries from './Groceries.jsx'
 
 // fmtTime renders a message's ISO timestamp as a short local time (e.g. "3:04 PM"),
 // with the date prepended when it's not today. Returns '' for missing/bad input.
@@ -61,7 +63,7 @@ function Workspace() {
   const [active, setActive] = useState(null) // the selected thread object
   const [loadErr, setLoadErr] = useState('')
   const [loading, setLoading] = useState(true)
-  const [tab, setTab] = useState('chat') // 'chat' | 'recipes' | 'search'
+  const [tab, setTab] = useState('chat') // 'chat' | 'recipes' | 'search' | 'groceries' | 'preferences'
 
   const loadAll = useCallback(async () => {
     setLoading(true)
@@ -150,6 +152,18 @@ function Workspace() {
           >
             Search
           </button>
+          <button
+            className={`tab ${tab === 'groceries' ? 'active' : ''}`}
+            onClick={() => setTab('groceries')}
+          >
+            Groceries
+          </button>
+          <button
+            className={`tab ${tab === 'preferences' ? 'active' : ''}`}
+            onClick={() => setTab('preferences')}
+          >
+            Preferences
+          </button>
         </div>
 
         {tab === 'chat' ? (
@@ -165,6 +179,10 @@ function Workspace() {
           )
         ) : tab === 'search' ? (
           <Search getToken={getToken} />
+        ) : tab === 'groceries' ? (
+          <Groceries getToken={getToken} />
+        ) : tab === 'preferences' ? (
+          <Preferences getToken={getToken} />
         ) : (
           <Recipes getToken={getToken} />
         )}
