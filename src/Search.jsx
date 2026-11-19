@@ -23,11 +23,37 @@ const STATUS = {
 }
 
 const KIND_LABEL = { recent: 'Recent', recipe: 'Meelo', web: 'Web' }
+// Dropdown sections, in order, and which search modes show each.
+const SECTIONS = [
+  { kind: 'recent', title: 'Recent searches', modes: ['all', 'meelo', 'web'] },
+  { kind: 'recipe', title: 'On Meelo', modes: ['all', 'meelo'] },
+  { kind: 'web', title: 'Recipes on the web', modes: ['all', 'web'] },
+]
+
+// Bold the part of a suggestion that matches what's typed (each typed word,
+// at the start of a word).
+function Highlight({ text, typed }) {
+  const words = typed.toLowerCase().split(/\s+/).filter(Boolean)
+  if (!words.length) return text
+  const parts = text.split(/(\s+)/)
+  return parts.map((p, i) => {
+    const w = words.find((t) => p.toLowerCase().startsWith(t))
+    return w ? (
+      <span key={i}>
+        <b>{p.slice(0, w.length)}</b>
+        {p.slice(w.length)}
+      </span>
+    ) : (
+      <span key={i}>{p}</span>
+    )
+  })
+}
 
 export default function Search({ getToken }) {
   const [input, setInput] = useState('')
   const [query, setQuery] = useState('') // the search that was run
   const [suggestions, setSuggestions] = useState([])
+  const [suggestFor, setSuggestFor] = useState(null) // the text the shown suggestions are for
   const [showSuggest, setShowSuggest] = useState(false)
   const [highlight, setHighlight] = useState(-1)
 
@@ -45,13 +71,18 @@ export default function Search({ getToken }) {
     const seq = ++suggestSeq.current
     const t = setTimeout(async () => {
       try {
-        const out = await getSuggestions(getToken, input.trim())
+        const typed = input.trim()
+        const out = await getSuggestions(getToken, typed)
         if (seq === suggestSeq.current) {
           setSuggestions(out?.suggestions || [])
+          setSuggestFor(typed)
           setHighlight(-1)
         }
       } catch {
-        if (seq === suggestSeq.current) setSuggestions([])
+        if (seq === suggestSeq.current) {
+          setSuggestions([])
+          setSuggestFor(input.trim())
+        }
       }
     }, 180)
     return () => clearTimeout(t)
@@ -141,20 +172,35 @@ export default function Search({ getToken }) {
     }
   }
 
+  // What the dropdown shows: the sections the search mode includes, in order.
+  const visible = SECTIONS.filter((sec) => sec.modes.includes(mode)).flatMap((sec) =>
+    suggestions.filter((x) => x.kind === sec.kind)
+  )
+  const loadingSuggest = showSuggest && suggestFor !== input.trim()
+
+  // Put a suggestion in the box without searching (Tab / →), to keep typing.
+  function accept(text) {
+    setInput(text + ' ')
+    setHighlight(-1)
+  }
+
   function onKeyDown(e) {
-    if (!showSuggest || suggestions.length === 0) {
+    if (!showSuggest || visible.length === 0) {
       if (e.key === 'Enter') run(input)
       return
     }
     if (e.key === 'ArrowDown') {
       e.preventDefault()
-      setHighlight((h) => Math.min(h + 1, suggestions.length - 1))
+      setHighlight((h) => Math.min(h + 1, visible.length - 1))
     } else if (e.key === 'ArrowUp') {
       e.preventDefault()
       setHighlight((h) => Math.max(h - 1, -1))
     } else if (e.key === 'Enter') {
       e.preventDefault()
-      run(highlight >= 0 ? suggestions[highlight].text : input)
+      run(highlight >= 0 ? visible[highlight].text : input)
+    } else if ((e.key === 'Tab' || (e.key === 'ArrowRight' && e.target.selectionStart === input.length)) && highlight >= 0) {
+      e.preventDefault()
+      accept(visible[highlight].text)
     } else if (e.key === 'Escape') {
       setShowSuggest(false)
     }
@@ -198,20 +244,41 @@ export default function Search({ getToken }) {
           Search
         </button>
 
-        {showSuggest && suggestions.length > 0 && (
+        {showSuggest && (visible.length > 0 || loadingSuggest || input.trim().length >= 2) && (
           <div className="suggest">
-            {suggestions.map((s, i) => (
-              <button
-                key={s.kind + s.text + i}
-                className={`suggest-row ${i === highlight ? 'hl' : ''}`}
-                onMouseEnter={() => setHighlight(i)}
-                onClick={() => run(s.text)}
-              >
-                <span className={`kind kind-${s.kind}`}>{KIND_LABEL[s.kind] || s.kind}</span>
-                <span className="suggest-text">{s.text}</span>
-                {s.relation && <span className="muted small">{s.relation}</span>}
-              </button>
-            ))}
+            {SECTIONS.filter((sec) => sec.modes.includes(mode)).map((sec) => {
+              const rows = visible.filter((x) => x.kind === sec.kind)
+              if (rows.length === 0) return null
+              return (
+                <div key={sec.kind}>
+                  <div className="suggest-head">{sec.title}</div>
+                  {rows.map((s) => {
+                    const i = visible.indexOf(s)
+                    return (
+                      <div key={s.kind + s.text} className={`suggest-row ${i === highlight ? 'hl' : ''}`} onMouseEnter={() => setHighlight(i)}>
+                        <button className="suggest-main" onClick={() => run(s.text)} title="Search this">
+                          <span className={`kind kind-${s.kind}`}>{KIND_LABEL[s.kind] || s.kind}</span>
+                          <span className="suggest-text">
+                            <Highlight text={s.text} typed={input} />
+                          </span>
+                          {s.relation && <span className="muted small">{s.relation}</span>}
+                        </button>
+                        <button className="suggest-fill" onClick={() => accept(s.text)} title="Put in the box (Tab)">
+                          ↖
+                        </button>
+                      </div>
+                    )
+                  })}
+                </div>
+              )
+            })}
+            {loadingSuggest && <div className="suggest-note">Looking up suggestions…</div>}
+            {!loadingSuggest && visible.length === 0 && input.trim().length >= 2 && (
+              <div className="suggest-note">No suggestions — press Enter to search “{input.trim()}”.</div>
+            )}
+            {!loadingSuggest && visible.length > 0 && (
+              <div className="suggest-note">↑↓ choose · Enter search · Tab fill in · Esc close</div>
+            )}
             {hasRecents && (
               <button className="suggest-clear" onClick={clearRecents}>
                 Clear recent searches
