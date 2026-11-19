@@ -153,3 +153,30 @@ export const clearGroceryProduct = (getToken, id) =>
 // More catalog products for q (US, household allergies, ranked).
 export const searchGroceryProducts = (getToken, q, limit = 10) =>
   request(getToken, '/api/core', `/grocery/products/search?q=${encodeURIComponent(q)}&limit=${limit}`)
+
+// ── Adapt (core) ─────────────────────────────────────────────────────────────
+
+// Open a Recipe Edit thread (nothing saved). From a saved recipe id, or from a
+// recipe object (an import / generate draft). adapt=false edits without the
+// household's allergies, diets and goals.
+export const startRecipeEdit = (getToken, { recipeId, recipe, adapt = true }) =>
+  request(getToken, '/api/core', recipeId ? `/threads/recipe-edit/${recipeId}` : '/threads/recipe-edit', {
+    method: 'POST',
+    body: JSON.stringify(recipeId ? { adapt } : { recipe, adapt }),
+  })
+
+// Save a Meelo recipe reply in a Recipe Edit thread (a version, or a new
+// recipe for a thread opened from an object).
+export const saveEditVersion = (getToken, threadId, messageId, makeCurrent = true) =>
+  request(getToken, '/api/core', `/threads/${threadId}/messages/${messageId}/save-version`, {
+    method: 'POST',
+    body: JSON.stringify({ make_current: makeCurrent }),
+  })
+
+// Drop a Recipe Edit thread (scratch; hard-deleted).
+export const deleteThread = (getToken, threadId) =>
+  request(getToken, '/api/core', `/threads/${threadId}`, { method: 'DELETE' })
+
+// One-shot adapt: makes the household version now (or answers adapt_notice).
+export const adaptRecipeNow = (getToken, recipeId) =>
+  request(getToken, '/api/core', `/recipes/${recipeId}/adapt`, { method: 'POST', body: '{}' })

@@ -6,6 +6,7 @@ import {
   clearRecentSearches,
   importRecipeURL,
 } from './api.js'
+import AdaptLab from './AdaptLab.jsx'
 import './search.css'
 
 // Search tab: the search box with autocomplete (GET /search/suggest), then
@@ -60,6 +61,7 @@ export default function Search({ getToken }) {
   const [meelo, setMeelo] = useState({ loading: false, results: [], err: '' })
   const [web, setWeb] = useState({ loading: false, results: [], err: '', nextPage: null, ms: 0 })
   const [preview, setPreview] = useState(null) // { result, loading, draft, err }
+  const [adaptFor, setAdaptFor] = useState(null) // { source, mode } for the Adapt panel
   const [mode, setMode] = useState('all') // all | meelo | web — GET /search/recipes?source=
 
   const boxRef = useRef(null)
@@ -317,6 +319,12 @@ export default function Search({ getToken }) {
                   )}
                   <div className="meelo-body">
                     <div className="recipe-title">{r.title}</div>
+                    {r.recipe_id && (
+                      <div className="meelo-actions">
+                        <button onClick={() => setAdaptFor({ mode: 'chat', source: { title: r.title, recipeId: r.recipe_id } })}>Adapt in chat</button>
+                        <button onClick={() => setAdaptFor({ mode: 'now', source: { title: r.title, recipeId: r.recipe_id } })}>Adapt now</button>
+                      </div>
+                    )}
                     <div className="muted small">
                       {[r.author_display_name || r.author || r.subtitle, r.relation, r.total_time_minutes && `${r.total_time_minutes} min`]
                         .filter(Boolean)
@@ -354,7 +362,17 @@ export default function Search({ getToken }) {
         </div>
       )}
 
-      {preview && <ImportPreview preview={preview} onClose={() => setPreview(null)} />}
+      {preview && (
+        <ImportPreview
+          preview={preview}
+          onClose={() => setPreview(null)}
+          onAdapt={(draft) => {
+            setPreview(null)
+            setAdaptFor({ mode: 'chat', source: { title: draft.dish_name, recipe: draft } })
+          }}
+        />
+      )}
+      {adaptFor && <AdaptLab getToken={getToken} source={adaptFor.source} mode={adaptFor.mode} onClose={() => setAdaptFor(null)} />}
     </div>
   )
 }
@@ -404,7 +422,7 @@ function WebCard({ r, onImport }) {
   )
 }
 
-function ImportPreview({ preview, onClose }) {
+function ImportPreview({ preview, onClose, onAdapt }) {
   const { result, loading, draft, err } = preview
   useEffect(() => {
     const onKey = (e) => e.key === 'Escape' && onClose()
@@ -461,6 +479,11 @@ function ImportPreview({ preview, onClose }) {
           <a className="web-open" href={result.url} target="_blank" rel="noreferrer">
             Original ↗
           </a>
+          {draft && (
+            <button className="recipe-save-btn" onClick={() => onAdapt(draft)}>
+              Adapt for my household
+            </button>
+          )}
           <button className="refresh small" onClick={onClose}>
             Close
           </button>

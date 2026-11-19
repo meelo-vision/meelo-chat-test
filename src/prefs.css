@@ -51,3 +51,23 @@
 
 .ip-modal.wide { width: min(1000px, 100%); }
 .browse-bar { padding: 10px 14px; border-bottom: 1px solid var(--line); }
+
+/* Adapt panel */
+.adapt .ip-body { display: flex; flex-direction: column; gap: 10px; }
+.adapt-intro p { margin: 0 0 8px; font-size: 13px; }
+.adapt-toggle { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.adapt-ask { align-self: flex-end; background: var(--me); color: #fff; border-radius: 12px; padding: 8px 12px; max-width: 75%; font-size: 13px; }
+.adapt-reply { background: var(--panel2); border: 1px solid var(--line); border-radius: 12px; padding: 12px; }
+.adapt-text { white-space: pre-wrap; font-size: 13px; }
+.adapt-recipe h3 { margin: 0 0 4px; }
+.adapt-changes { margin: 8px 0; font-size: 13px; background: var(--panel); border-left: 3px solid var(--accent); padding: 6px 10px; border-radius: 6px; }
+.adapt-notice { font-size: 13px; padding: 8px 10px; border-radius: 8px; background: var(--panel); border: 1px solid var(--line); margin-bottom: 8px; }
+.adapt-notice.bad { background: #3a1d1d; border-color: #5a2a2a; color: #ffb3b3; }
+.adapt-busy { font-style: italic; }
+.ing-added { color: #7fdc9c; }
+.ing-changed { color: #f3c969; }
+.ing-removed { color: #ff9a9a; text-decoration: line-through; }
+.save-btn { background: #2f7a46 !important; }
+.meelo-actions { display: flex; gap: 6px; margin-top: 4px; }
+.meelo-actions button { background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 6px; font-size: 11px; padding: 3px 8px; cursor: pointer; }
+.meelo-actions button:hover { border-color: var(--accent); }
