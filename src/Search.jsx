@@ -34,6 +34,7 @@ export default function Search({ getToken }) {
   const [meelo, setMeelo] = useState({ loading: false, results: [], err: '' })
   const [web, setWeb] = useState({ loading: false, results: [], err: '', nextPage: null, ms: 0 })
   const [preview, setPreview] = useState(null) // { result, loading, draft, err }
+  const [mode, setMode] = useState('all') // all | meelo | web — GET /search/recipes?source=
 
   const boxRef = useRef(null)
   const suggestSeq = useRef(0)
@@ -66,33 +67,43 @@ export default function Search({ getToken }) {
   }, [])
 
   const run = useCallback(
-    async (q) => {
+    async (q, m = mode) => {
       q = q.trim().replace(/\s+/g, ' ')
       if (q.length < 2) return
       setInput(q)
       setQuery(q)
       setShowSuggest(false)
-      setMeelo({ loading: true, results: [], err: '' })
-      setWeb({ loading: true, results: [], err: '', nextPage: null, ms: 0 })
+      const wantMeelo = m !== 'web'
+      const wantWeb = m !== 'meelo'
+      setMeelo({ loading: wantMeelo, results: [], err: '' })
+      setWeb({ loading: wantWeb, results: [], err: '', nextPage: null, ms: 0 })
 
-      searchRecipes(getToken, q)
-        .then((out) => setMeelo({ loading: false, results: out?.results || [], err: '' }))
-        .catch((e) => setMeelo({ loading: false, results: [], err: e.message }))
-
+      // One call per mode: GET /search/recipes?source=meelo|web|all.
       const t0 = performance.now()
-      searchWeb(getToken, q, 0)
-        .then((out) =>
+      try {
+        const out = await searchRecipes(getToken, q, null, m)
+        const ms = Math.round(performance.now() - t0)
+        if (m === 'web') {
+          setWeb({ loading: false, results: out?.results || [], err: '', nextPage: out?.next_page ?? null, ms })
+          return
+        }
+        setMeelo({ loading: false, results: out?.results || [], err: '' })
+        if (m === 'all') {
+          const w = out?.web
           setWeb({
             loading: false,
-            results: out?.results || [],
-            err: '',
-            nextPage: out?.next_page ?? null,
-            ms: Math.round(performance.now() - t0),
+            results: w?.results || [],
+            err: w ? '' : `Web search failed (${out?.web_error || 'unknown'})`,
+            nextPage: w?.next_page ?? null,
+            ms,
           })
-        )
-        .catch((e) => setWeb({ loading: false, results: [], err: e.message, nextPage: null, ms: 0 }))
+        }
+      } catch (e) {
+        setMeelo({ loading: false, results: [], err: wantMeelo ? e.message : '' })
+        setWeb({ loading: false, results: [], err: wantWeb ? e.message : '', nextPage: null, ms: 0 })
+      }
     },
-    [getToken]
+    [getToken, mode]
   )
 
   async function moreWeb() {
@@ -165,6 +176,24 @@ export default function Search({ getToken }) {
           onFocus={() => setShowSuggest(true)}
           onKeyDown={onKeyDown}
         />
+        <div className="mode-switch" role="tablist" aria-label="What to search">
+          {[
+            ['all', 'Both'],
+            ['meelo', 'Meelo'],
+            ['web', 'Web'],
+          ].map(([m, label]) => (
+            <button
+              key={m}
+              className={`mode ${mode === m ? 'on' : ''}`}
+              onClick={() => {
+                setMode(m)
+                if (query) run(query, m)
+              }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
         <button className="search-go" onClick={() => run(input)} disabled={input.trim().length < 2}>
           Search
         </button>
@@ -201,6 +230,7 @@ export default function Search({ getToken }) {
 
       {query && (
         <div className="search-results">
+          {mode !== 'web' && (
           <section className="section">
             <h3 className="section-title">
               On Meelo <span className="muted small">({meelo.results.length})</span>
@@ -230,7 +260,9 @@ export default function Search({ getToken }) {
               ))}
             </div>
           </section>
+          )}
 
+          {mode !== 'meelo' && (
           <section className="section">
             <h3 className="section-title">
               From the web <span className="muted small">({web.results.length}{web.ms ? ` · ${web.ms} ms` : ''})</span>
@@ -251,6 +283,7 @@ export default function Search({ getToken }) {
               </button>
             )}
           </section>
+          )}
         </div>
       )}
 

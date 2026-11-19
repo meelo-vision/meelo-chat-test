@@ -87,8 +87,10 @@ export const getSuggestions = (getToken, q) =>
   request(getToken, '/api/core', `/search/suggest?${qs({ q })}`)
 
 // Meelo recipes the caller can open (own, saved, public).
-export const searchRecipes = (getToken, q, cursor) =>
-  request(getToken, '/api/core', `/search/recipes?${qs({ q, cursor })}`)
+// source: meelo (default) | web | all. all adds the web's first page as
+// `web` ({results, next_page}); web answers exactly like /search/web.
+export const searchRecipes = (getToken, q, cursor, source) =>
+  request(getToken, '/api/core', `/search/recipes?${qs({ q, cursor, source })}`)
 
 // Recipe pages from the web (Brave), with import_status per result.
 export const searchWeb = (getToken, q, page = 0) =>

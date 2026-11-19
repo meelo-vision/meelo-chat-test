@@ -4,10 +4,13 @@
 .search-bar { position: sticky; top: 0; z-index: 10; display: flex; gap: 8px; padding: 12px 16px; background: var(--panel); border-bottom: 1px solid var(--line); }
 .search-input { flex: 1; background: var(--panel2); color: var(--text); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; font-size: 15px; outline: none; }
 .search-input:focus { border-color: var(--accent); }
+.mode-switch { display: flex; background: var(--panel2); border: 1px solid var(--line); border-radius: 10px; padding: 2px; }
+.mode { background: transparent; color: var(--muted); border: none; border-radius: 8px; padding: 0 12px; font-size: 13px; font-weight: 600; cursor: pointer; }
+.mode.on { background: var(--accent); color: #fff; }
 .search-go { background: var(--accent); color: #fff; border: none; border-radius: 10px; padding: 0 18px; font-weight: 600; cursor: pointer; }
 .search-go:disabled { opacity: .5; cursor: default; }
 
-.suggest { position: absolute; top: calc(100% - 6px); left: 16px; right: 104px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 12px 32px rgba(0,0,0,.45); overflow: hidden; }
+.suggest { position: absolute; top: calc(100% - 6px); left: 16px; right: 290px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 12px 32px rgba(0,0,0,.45); overflow: hidden; }
 .suggest-row { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; background: transparent; color: var(--text); border: none; border-bottom: 1px solid var(--line); padding: 9px 12px; font-size: 14px; cursor: pointer; }
 .suggest-row.hl { background: var(--panel2); }
 .suggest-text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
