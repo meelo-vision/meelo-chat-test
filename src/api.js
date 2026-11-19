@@ -180,3 +180,17 @@ export const deleteThread = (getToken, threadId) =>
 // One-shot adapt: makes the household version now (or answers adapt_notice).
 export const adaptRecipeNow = (getToken, recipeId) =>
   request(getToken, '/api/core', `/recipes/${recipeId}/adapt`, { method: 'POST', body: '{}' })
+
+// ── Recipes from search (core) ───────────────────────────────────────────────
+
+// One recipe as the app shows it: author card (absent on imports) and
+// original_author (imports).
+export const getRecipe = (getToken, id) => request(getToken, '/api/core', `/recipes/id/${id}`)
+
+// Save someone else's recipe to my library (a partial save of its cookbook).
+// Own recipe: 200 { own: true } no-op.
+export const saveRecipe = (getToken, id) =>
+  request(getToken, '/api/core', `/recipes/${id}/save`, { method: 'POST', body: '{}' })
+
+export const unsaveRecipe = (getToken, id) =>
+  request(getToken, '/api/core', `/recipes/${id}/save`, { method: 'DELETE' })

@@ -1,12 +1,16 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import {
   getSuggestions,
+  saveRecipe,
+  unsaveRecipe,
   searchRecipes,
   searchWeb,
   clearRecentSearches,
   importRecipeURL,
 } from './api.js'
 import AdaptLab from './AdaptLab.jsx'
+import Credit from './Credit.jsx'
+import RecipeDetail from './RecipeDetail.jsx'
 import './search.css'
 
 // Search tab: the search box with autocomplete (GET /search/suggest), then
@@ -62,6 +66,27 @@ export default function Search({ getToken }) {
   const [web, setWeb] = useState({ loading: false, results: [], err: '', nextPage: null, ms: 0 })
   const [preview, setPreview] = useState(null) // { result, loading, draft, err }
   const [adaptFor, setAdaptFor] = useState(null) // { source, mode } for the Adapt panel
+  const [detail, setDetail] = useState(null) // { recipeId, relation } for the recipe view
+  const [relations, setRelations] = useState({}) // recipe_id -> relation after Save / Unsave
+  const [saving, setSaving] = useState({}) // recipe_id -> true while saving
+
+  async function toggleSave(r) {
+    const rel = relations[r.recipe_id] || r.relation
+    setSaving((x) => ({ ...x, [r.recipe_id]: true }))
+    try {
+      if (rel === 'saved') {
+        await unsaveRecipe(getToken, r.recipe_id)
+        setRelations((x) => ({ ...x, [r.recipe_id]: 'public' }))
+      } else {
+        const out = await saveRecipe(getToken, r.recipe_id)
+        setRelations((x) => ({ ...x, [r.recipe_id]: out?.own ? 'own' : 'saved' }))
+      }
+    } catch (e) {
+      setMeelo((m) => ({ ...m, err: `Save failed: ${e.message}` }))
+    } finally {
+      setSaving((x) => ({ ...x, [r.recipe_id]: false }))
+    }
+  }
   const [mode, setMode] = useState('all') // all | meelo | web — GET /search/recipes?source=
 
   const boxRef = useRef(null)
@@ -168,7 +193,7 @@ export default function Search({ getToken }) {
     setPreview({ result, loading: true, draft: null, err: '' })
     try {
       const out = await importRecipeURL(getToken, result.url)
-      setPreview({ result, loading: false, draft: out?.draft, err: '' })
+      setPreview({ result, loading: false, draft: out?.draft, original: out?.original_author, err: '' })
     } catch (e) {
       setPreview({ result, loading: false, draft: null, err: e.message })
     }
@@ -319,17 +344,26 @@ export default function Search({ getToken }) {
                   )}
                   <div className="meelo-body">
                     <div className="recipe-title">{r.title}</div>
+                    <Credit compact original={r.original_author} handle={r.author} displayName={r.author_display_name} />
+                    <div className="muted small">
+                      {[relations[r.recipe_id] || r.relation, r.total_time_minutes && `${r.total_time_minutes} min`]
+                        .filter(Boolean)
+                        .join(' · ')}
+                    </div>
                     {r.recipe_id && (
                       <div className="meelo-actions">
+                        <button onClick={() => setDetail({ recipeId: r.recipe_id, relation: relations[r.recipe_id] || r.relation })}>View</button>
+                        {(relations[r.recipe_id] || r.relation) === 'own' ? (
+                          <span className="status status-good">Yours</span>
+                        ) : (
+                          <button className={(relations[r.recipe_id] || r.relation) === 'saved' ? 'on' : ''} disabled={saving[r.recipe_id]} onClick={() => toggleSave(r)}>
+                            {(relations[r.recipe_id] || r.relation) === 'saved' ? 'Saved ✓' : 'Save'}
+                          </button>
+                        )}
                         <button onClick={() => setAdaptFor({ mode: 'chat', source: { title: r.title, recipeId: r.recipe_id } })}>Adapt in chat</button>
                         <button onClick={() => setAdaptFor({ mode: 'now', source: { title: r.title, recipeId: r.recipe_id } })}>Adapt now</button>
                       </div>
                     )}
-                    <div className="muted small">
-                      {[r.author_display_name || r.author || r.subtitle, r.relation, r.total_time_minutes && `${r.total_time_minutes} min`]
-                        .filter(Boolean)
-                        .join(' · ')}
-                    </div>
                   </div>
                 </div>
               ))}
@@ -369,6 +403,18 @@ export default function Search({ getToken }) {
           onAdapt={(draft) => {
             setPreview(null)
             setAdaptFor({ mode: 'chat', source: { title: draft.dish_name, recipe: draft } })
+          }}
+        />
+      )}
+      {detail && (
+        <RecipeDetail
+          getToken={getToken}
+          recipeId={detail.recipeId}
+          relation={detail.relation}
+          onClose={() => setDetail(null)}
+          onAdapt={(r) => {
+            setDetail(null)
+            setAdaptFor({ mode: 'chat', source: { title: r.dish_name, recipeId: detail.recipeId } })
           }}
         />
       )}
@@ -445,6 +491,7 @@ function ImportPreview({ preview, onClose, onAdapt }) {
           {draft && (
             <>
               <h2 className="import-title">{draft.dish_name}</h2>
+              <Credit original={preview.original || draft.original_author && { ...draft.original_author, url: draft.source_url, site: result.site }} />
               <div className="muted small">
                 {[
                   draft.cuisine_type,
