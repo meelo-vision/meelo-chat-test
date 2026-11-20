@@ -1,0 +1,22 @@
+.wp { margin-bottom: 20px; }
+.wp .prefs-actions select { background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 3px 6px; font-size: 13px; }
+.wp-meals { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 10px; }
+.wp-meal { padding: 3px 10px; }
+.wp-meal-off { color: var(--muted); border-style: dashed; }
+.wp-counts { display: flex; gap: 14px; margin-bottom: 8px; }
+.wp-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.wp-table th { text-align: left; color: var(--muted); font-weight: 500; border-bottom: 1px solid var(--line); padding: 4px 6px; }
+.wp-table td { border-bottom: 1px solid var(--line); padding: 5px 6px; vertical-align: top; }
+.wp-table tr.wp-open td, .wp-uses td { border-bottom: none; }
+.wp-uses td { padding-top: 0; padding-bottom: 8px; }
+.wp-name { background: none; border: none; color: var(--text); padding: 0; cursor: pointer; text-decoration: underline dotted; font-size: 13px; }
+.wp-pill { font-size: 11px; padding: 1px 8px; border-radius: 10px; border: 1px solid var(--line); white-space: nowrap; }
+.wp-buy { background: #3a2a10; border-color: #7a5a1a; color: #ffd28a; }
+.wp-covered { background: #14301c; border-color: #2c6a3c; color: #9fe0b0; }
+.wp-onlist { background: #15263a; border-color: #2c4f7a; color: #9cc6ff; }
+.wp-check { background: #2b1717; border-color: #5a2a2a; color: #ffb0b0; }
+.wp-actions { display: flex; gap: 8px; margin-top: 10px; }
+.wp-result { margin-top: 8px; }
+@media (max-width: 640px) {
+  .wp-table th:nth-child(5), .wp-table td:nth-child(5), .wp-table th:nth-child(6), .wp-table td:nth-child(6) { display: none; }
+}

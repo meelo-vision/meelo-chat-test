@@ -154,6 +154,18 @@ export const clearGroceryProduct = (getToken, id) =>
 export const searchGroceryProducts = (getToken, q, limit = 10) =>
   request(getToken, '/api/core', `/grocery/products/search?q=${encodeURIComponent(q)}&limit=${limit}`)
 
+// The week's groceries from the meal plan: per food, the meals that use it,
+// on hand, on the list, to buy, left over. apply puts the buy items on the
+// list (all, or just names).
+export const getWeekPlan = (getToken, days = 7) =>
+  request(getToken, '/api/core', `/grocery/week-plan?days=${days}`)
+
+export const applyWeekPlan = (getToken, days = 7, names = []) =>
+  request(getToken, '/api/core', '/grocery/week-plan/apply', {
+    method: 'POST',
+    body: JSON.stringify({ days, names }),
+  })
+
 // ── Adapt (core) ─────────────────────────────────────────────────────────────
 
 // Open a Recipe Edit thread (nothing saved). From a saved recipe id, or from a

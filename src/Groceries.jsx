@@ -8,6 +8,7 @@ import {
   searchGroceryProducts,
   getContext,
 } from './api.js'
+import WeekPlan from './WeekPlan.jsx'
 import './search.css'
 import './prefs.css'
 
@@ -24,6 +25,7 @@ export default function Groceries({ getToken }) {
   const [input, setInput] = useState('')
   const [allergies, setAllergies] = useState([])
   const [browse, setBrowse] = useState(null) // the item whose products are being browsed
+  const [showPlan, setShowPlan] = useState(false) // the week plan from scheduled meals
   const poll = useRef(null)
 
   const apply = (out) => setItems(out?.items || [])
@@ -89,6 +91,9 @@ export default function Groceries({ getToken }) {
         <h2>Groceries</h2>
         <div className="prefs-actions">
           {busy && <span className="muted small">{busy}</span>}
+          <button className="refresh small" onClick={() => setShowPlan(!showPlan)}>
+            {showPlan ? 'Hide week plan' : 'Week plan'}
+          </button>
           <button className="refresh small" onClick={load}>Refresh</button>
         </div>
       </div>
@@ -98,6 +103,8 @@ export default function Groceries({ getToken }) {
         Preferences tab.
       </p>
       {err && <div className="error">{err}</div>}
+
+      {showPlan && <WeekPlan getToken={getToken} onApplied={load} />}
 
       <form
         className="pref-add grocery-add"
