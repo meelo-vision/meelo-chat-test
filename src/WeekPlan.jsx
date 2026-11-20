@@ -2,10 +2,12 @@ import React, { useCallback, useEffect, useState } from 'react'
 import { getWeekPlan, applyWeekPlan } from './api.js'
 import './weekplan.css'
 
-// Week plan (core GET /grocery/week-plan): the household's scheduled meals
-// for the next few days, totalled per food and set against the pantry and the
-// grocery list. "Buy" items can be put on the list (POST /apply); "check"
-// items have a unit the plan can't compare and are never added on their own.
+// Week plan (core GET /grocery/week-plan): what the household's scheduled
+// meals for the next few days need more of, after the pantry and the grocery
+// list. Recipes are scaled to the household; amounts in units that don't
+// convert are estimated through food densities (≈). The report lists only the
+// foods to buy (counts cover covered / on-list / check too); put them on the
+// list with POST /apply.
 
 const STATUS = {
   buy: { label: 'Buy', cls: 'wp-buy' },
@@ -14,11 +16,11 @@ const STATUS = {
   check: { label: 'Check', cls: 'wp-check' },
 }
 
-const fmt = (a) => (a ? `${+a.quantity.toFixed(2)}${a.unit ? ' ' + a.unit : ''}` : '—')
+const fmt = (a, approx = false) => (a ? `${approx ? '≈ ' : ''}${+a.quantity.toFixed(2)}${a.unit ? ' ' + a.unit : ''}` : '—')
 
-const heldText = (h) => {
+const heldText = (h, approx) => {
   if (!h) return '—'
-  if (h.amount) return fmt(h.amount)
+  if (h.amount) return fmt(h.amount, approx)
   return h.rows.map((r) => `${r.name}: ${+r.quantity.toFixed(2)}${r.unit ? ' ' + r.unit : ''}`).join(', ')
 }
 
@@ -94,8 +96,13 @@ export default function WeekPlan({ getToken, onApplied }) {
           <div className="wp-meals">
             {plan.meals.length === 0 && <span className="muted small">No home-cooked meals scheduled.</span>}
             {plan.meals.map((m) => (
-              <span key={m.meal_id} className={'chip wp-meal' + (m.status !== 'planned' ? ' wp-meal-off' : '')} title={m.status}>
+              <span
+                key={m.meal_id}
+                className={'chip wp-meal' + (m.status !== 'planned' ? ' wp-meal-off' : '')}
+                title={m.servings ? `serves ${m.servings}, scaled ×${+m.scale.toFixed(2)}` : 'servings not listed: as written'}
+              >
                 {day(m.scheduled_at_ms)} · {m.title || '(untitled)'}
+                {m.status === 'planned' && m.scale && m.scale !== 1 ? ` ×${+m.scale.toFixed(2)}` : ''}
                 {m.status === 'no_recipe' && ' (no recipe)'}
                 {m.status === 'no_ingredients' && ' (no ingredients)'}
               </span>
@@ -103,6 +110,9 @@ export default function WeekPlan({ getToken, onApplied }) {
           </div>
 
           <div className="wp-counts muted small">
+            <span>
+              Household: <b>{plan.household_size}</b>
+            </span>
             {Object.entries(STATUS).map(([k, v]) => (
               <span key={k}>
                 {v.label}: <b>{plan.counts?.[k] || 0}</b>
@@ -110,6 +120,7 @@ export default function WeekPlan({ getToken, onApplied }) {
             ))}
           </div>
 
+          {items.length === 0 && plan.meals.length > 0 && <div className="muted small">Nothing to buy for these meals.</div>}
           {items.length > 0 && (
             <table className="wp-table">
               <thead>
@@ -121,7 +132,6 @@ export default function WeekPlan({ getToken, onApplied }) {
                   <th>On hand</th>
                   <th>On list</th>
                   <th>To buy</th>
-                  <th>Left after</th>
                 </tr>
               </thead>
               <tbody>
@@ -147,21 +157,22 @@ export default function WeekPlan({ getToken, onApplied }) {
                       <td>
                         <span className={'wp-pill ' + (STATUS[it.status]?.cls || '')}>{STATUS[it.status]?.label || it.status}</span>
                       </td>
-                      <td>{fmt(it.needed)}</td>
-                      <td>{heldText(it.on_hand)}</td>
-                      <td>{heldText(it.on_list)}</td>
-                      <td>{it.status === 'buy' ? (it.to_buy ? fmt(it.to_buy) : 'some') : '—'}</td>
-                      <td>{fmt(it.leftover)}</td>
+                      <td>{fmt(it.needed, it.estimated)}</td>
+                      <td>{heldText(it.on_hand, it.estimated)}</td>
+                      <td>{heldText(it.on_list, it.estimated)}</td>
+                      <td>{it.to_buy ? fmt(it.to_buy, it.estimated) : 'some'}</td>
                     </tr>
                     {open[it.name] && (
                       <tr className="wp-uses">
                         <td />
-                        <td colSpan={7}>
+                        <td colSpan={6}>
                           {it.uses.map((u, i) => (
                             <div key={i} className="small">
                               {day(u.scheduled_at_ms)} · <b>{u.title}</b>: {u.ingredient}
+                              {u.scale && u.scale !== 1 ? ` (×${+u.scale.toFixed(2)} = ${+u.quantity.toFixed(2)}${u.unit ? ' ' + u.unit : ''})` : ''}
                             </div>
                           ))}
+                          {it.estimated && <div className="muted small">Estimated through the food's density / typical weight.</div>}
                           {it.note && <div className="muted small">{it.note}</div>}
                         </td>
                       </tr>
